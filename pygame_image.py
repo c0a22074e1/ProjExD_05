@@ -6,9 +6,8 @@ def main():
     screen = pg.display.set_mode((800, 600))
     clock  = pg.time.Clock()
     bg_img = pg.image.load("fig/pg_bg.jpg")
-    kk_img = pg.image.load("fig/3.png")
-    kk_img = pg.transform.flip(kk_img,True,False)
-    kk_img = pg.transform.rotozoom(kk_img,10,1.0)
+    kk_img = pg.transform.flip(pg.image.load("fig/3.png"),True,False)
+    kk_imgs = [kk_img,pg.transform.rotozoom(kk_img,10,1.0)]
 
     tmr = 0
 
@@ -17,8 +16,9 @@ def main():
             if event.type == pg.QUIT: return
 
         tmr += 1
-        screen.blit(bg_img, [0, 0])
-        screen.blit(kk_img,[100,100])
+        screen.blit(bg_img, [-tmr, 0])
+        ##screen.blit(bg_img,[,0])
+        screen.blit(kk_imgs[tmr%2],[300,200])
 
         pg.display.update()
         clock.tick(100)
