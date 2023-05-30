@@ -72,7 +72,7 @@ class Bird(pg.sprite.Sprite):
 
         self.rect = self.image.get_rect()
         self.rect.center = xy
-        self.speed = 3
+        self.speed = 5
 
     def update(self, key_lst: list[bool], screen: pg.Surface):
         """
@@ -197,6 +197,20 @@ class Enemy1(pg.sprite.Sprite):
         self.rect.centerx -= self.vx
 
 
+class Life(pg.sprite.Sprite): #残機に関するクラス
+    def __init__(self):
+
+        self.life=2
+
+        super().__init__()
+        self.image = pg.image.load(f"ex05/fig/0.png")
+        self.rect = self.image.get_rect()
+        self.rect.center = (WIDTH-40, (HEIGHT-50))
+
+
+    def decrease_life(self):
+        self.life-=1
+
 class Enemy2(pg.sprite.Sprite):
     """
     変則型敵機に関するクラス
@@ -241,6 +255,7 @@ def main():
     screen = pg.display.set_mode((WIDTH, HEIGHT))
     clock  = pg.time.Clock()
     bg_img = pg.image.load("ex05/fig/pg_bg.jpg")
+    life_img=pg.image.load("ex05/fig/0.png")
     bg_imgs = pg.transform.flip(bg_img, True,False)
     score = Score()
     diff_level = Difficulty_level("normal")
@@ -249,6 +264,7 @@ def main():
     bonusC = pg.sprite.Group()
     emys1 = pg.sprite.Group()  # 敵機のグループ
     emys2 = pg.sprite.Group()  # 変則型敵機
+    game_life=Life()
 
     tmr = 0
     flag = False
@@ -296,6 +312,16 @@ def main():
         screen.blit(bg_imgs, [1600-x, 0])
         screen.blit(bg_img, [3200-x, 0])
 
+        if game_life.life==2: #ライフに応じて表示を変更
+            screen.blit(life_img,[1440,750])
+            screen.blit(life_img,[1480,750])
+            screen.blit(life_img,[1520,750])
+        if game_life.life==1:
+            screen.blit(life_img,[1480,750])
+            screen.blit(life_img,[1520,750])
+        if game_life.life==0:
+            screen.blit(life_img,[1520,750])
+
         if flag and len(pg.sprite.spritecollide(bird, bonusC, True)) != 0:
             flag = False
 
@@ -316,13 +342,27 @@ def main():
 
         # 工科丸と敵機の衝突判定
         if len(pg.sprite.spritecollide(bird, emys1, True)) != 0:
-            pg.display.update()
-            return
+            if game_life.life>0:
+                pg.display.update()
+                game_life.decrease_life()
+                pg.display.update()
+                print(game_life.life)
+
+            else:
+                pg.display.update()
+                return
         
         # 工科丸と変則型敵機の衝突判定
         if len(pg.sprite.spritecollide(bird, emys2, True)) != 0:
-            pg.display.update()
-            return
+            if game_life.life>0:
+                pg.display.update()
+                game_life.decrease_life()
+                pg.display.update()
+                print(game_life.life)
+
+            else:
+                pg.display.update()
+                return
 
         # コインが外に出たら削除
         for coin in coins:
