@@ -57,28 +57,35 @@ class Coin(pg.sprite.Sprite):
     """
     コインに関するクラス
     """
-    def __init__(self, color: tuple[int, int, int], rad: int):
-        """
-        引数に基づきコインSurfaceを生成する
-        引数1 color：コインの色タプル
-        引数2 rad：コインの半径
-        """
+    img = pg.image.load("ex05/fig/coin.png")
+    
+    def __init__(self):
         super().__init__()
-        self.image = pg.Surface((2*rad, 2*rad))
-        pg.draw.circle(self.image, color, (rad, rad), rad)
-        self.image.set_colorkey((0, 0, 0))
+        self.image = Coin.img
+        self.image.set_colorkey((255, 255, 255))  # 白の背景を透過
+        self.image = pg.transform.rotozoom(self.image,0,0.5)
         self.rect = self.image.get_rect()
-        self.rect.center = (WIDTH-30, random.randint(0, HEIGHT))
-        self.vx, self.vy = +1, +1
+        self.rect.center = WIDTH-100,random.randint(0, HEIGHT)
+        self.vx = -2
 
+        
     def update(self):
-        self.rect.move_ip(-1, 0)
+        """
+        敵機を速度ベクトルself.vyに基づき移動（降下）させる
+        ランダムに決めた停止位置_boundまで降下
+        引数 screen：画面Surface
+        """
+        self.rect.centerx += self.vx
+
+
 
 
 class Bonus(pg.sprite.Sprite):
     """
     ボーナスコインに関するクラス
     """
+    img = pg.image.load("ex05/fig/coin_b.png")
+
     def __init__(self, color: tuple[int, int, int], rad: int):
         """
         引数に基づきボーナスコインSurfaceを生成する
@@ -86,9 +93,9 @@ class Bonus(pg.sprite.Sprite):
         引数2 rad：ボーナスコインの半径
         """
         super().__init__()
-        self.image = pg.Surface((2*rad, 2*rad))
-        pg.draw.circle(self.image, color, (rad, rad), rad)
-        self.image.set_colorkey((0, 0, 0))
+        self.image = Bonus.img
+        self.image.set_colorkey((255, 255, 255))  # 白の背景を透過
+        self.image = pg.transform.rotozoom(self.image,0,2.0)
         self.rect = self.image.get_rect()
         self.rect.center = (WIDTH, 450)
         self.vx = +1
@@ -97,18 +104,58 @@ class Bonus(pg.sprite.Sprite):
         self.rect.move_ip(-1, 0) 
 
 
-class Enemy(pg.sprite.Sprite):
+class Enemy1(pg.sprite.Sprite):
     """
     敵機に関するクラス
     """
+    imgs = [pg.image.load(f"ex05/fig/alien{i}.png") for i in range(1, 4)]
+    
     def __init__(self):
         super().__init__()
-        self.image = pg.image.load(f"ex05/fig/alien1.png")
+        self.image = random.choice(__class__.imgs)
         self.rect = self.image.get_rect()
-        self.rect.center = (WIDTH-40, random.randint(0, HEIGHT))
+        self.rect.center = WIDTH-50,random.randint(0, HEIGHT)
+        self.vx = random.randint(-5,-1)
+
+        
+    def update(self):
+
+        self.rect.centerx += self.vx
+
+
+class Enemy2(pg.sprite.Sprite):
+    """
+    変則型敵機に関するクラス
+    """
+    imgs = [pg.image.load(f"ex04/fig/alien{i}.png") for i in range(1, 4)]
+    
+    def __init__(self):
+        super().__init__()
+        self.image = random.choice(__class__.imgs)
+        self.image = pg.transform.rotozoom(self.image,0,2.0)  #敵機のサイズ二倍
+
+        self.rect = self.image.get_rect()
+        self.rect.center = random.randint(1200, WIDTH), 100
+        self.vy = +6
+        self.vx = random.randint(-5,-2)
+        self.bound = random.randint(50, HEIGHT)  # 停止位置
 
     def update(self):
-        self.rect.move_ip(-1, 0)
+        """
+        敵機を速度ベクトルself.vyに基づき移動（降下）させる
+        ランダムに決めた停止位置_boundまで降下
+        """
+        tmr = 0
+        
+        self.rect.centery += self.vy
+        if self.rect.centery > self.bound:
+            self.vy = 0
+            while True:
+                tmr += 1
+                if tmr % 10000 == 0:
+                    self.rect.centerx += self.vx
+                    tmr = 0
+                    break
 
 
 def main():
@@ -121,7 +168,8 @@ def main():
     bird = Bird([100, 200])
     coins = pg.sprite.Group()
     bonusC = pg.sprite.Group()
-    emys = pg.sprite.Group()
+    emys1 = pg.sprite.Group()  # 敵機のグループ
+    emys2 = pg.sprite.Group()  # 変則型敵機
 
     tmr = 0
     flag = False
@@ -133,18 +181,23 @@ def main():
         # フラグに応じてコインの生成を制御
         if not flag and tmr % 700 == 0:
             for i in range(3):
-                coins.add(Coin((255, 0, 0), 30))
+                coins.add(Coin())
 
         # フラグに応じて敵機の生成を制御
         if not flag and tmr % 700 == 0:
-            emys.add(Enemy())
+            emys1.add(Enemy1())
+            emys1.add(Enemy1())
+            emys2.add(Enemy2())
+            emys2.add(Enemy2())
 
         if tmr % 3000 == 0:
             flag = False
         elif tmr % 7000 == 0:
             flag = True
             coins.empty()  # コインの削除
-            emys.empty()  # 敵機の削除
+            emys1.empty()  # 敵機の削除
+            emys2.empty()  # 変則型敵機の削除
+
         
         if flag and tmr % 7000 == 0:
             bonusC.add(Bonus((0, 255, 0), 200))
@@ -167,7 +220,12 @@ def main():
             pg.display.update()
 
         # 工科丸と敵機の衝突判定
-        if len(pg.sprite.spritecollide(bird, emys, True)) != 0:
+        if len(pg.sprite.spritecollide(bird, emys1, True)) != 0:
+            pg.display.update()
+            return
+        
+        # 工科丸と変則型敵機の衝突判定
+        if len(pg.sprite.spritecollide(bird, emys2, True)) != 0:
             pg.display.update()
             return
 
@@ -176,7 +234,11 @@ def main():
             if False in check_bound(screen.get_rect(), coin.rect):
                 coin.kill()
         # 敵機が外に出たら削除
-        for emy in emys:
+        for emy in emys1:
+            if False in check_bound(screen.get_rect(), emy.rect):
+                emy.kill()
+        # 敵機が外に出たら削除
+        for emy in emys2:
             if False in check_bound(screen.get_rect(), emy.rect):
                 emy.kill()
         
@@ -186,8 +248,10 @@ def main():
         coins.draw(screen)
         bonusC.update()
         bonusC.draw(screen)
-        emys.update()
-        emys.draw(screen)
+        emys1.update()
+        emys1.draw(screen)
+        emys2.update()
+        emys2.draw(screen)
         pg.display.update()
         clock.tick(200)
 
