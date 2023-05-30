@@ -119,18 +119,17 @@ class Coin(pg.sprite.Sprite):
     """
     image = [1, 2, 2, 2]
     a = 0
-
-    def __init__(self):
+    def __init__(self, score: Score):
         super().__init__()
         self.count = random.choice(__class__.image)
         if self.count == 1:
             self.image = pg.image.load("ex05/fig/coin.png")
             self.image = pg.transform.rotozoom(self.image,0,0.5)
-            __class__.a = 1
+            score.flag = 1
         else:
             self.image = pg.image.load("ex05/fig/coin_silver.png")
             self.image = pg.transform.rotozoom(self.image,0,0.1)
-            __class__.a = 2
+            score.flag = 2
             #print(self.image)
         self.image.set_colorkey((255, 255, 255))  # 白の背景を透過
         
@@ -267,9 +266,9 @@ def main():
 
         # フラグに応じてコインの生成を制御
         if not flag and tmr % 300 == 0:
-            coins.add(Coin())
+            coins.add(Coin(score))
         if not flag and tmr % 500 == 0:
-            coins.add(Coin())
+            coins.add(Coin(score))
 
         # フラグに応じて敵機の生成を制御
         if not flag and tmr % diff_level.count == 0:
@@ -303,7 +302,7 @@ def main():
         # 工科丸とコインの衝突判定
         if len(pg.sprite.spritecollide(bird, coins, True)) != 0:
             diff_level.count -= 2
-            if Coin.a == 1:
+            if score.flag == 1:
                 score.score_up(20) 
             else:
                 score.score_up(10)
