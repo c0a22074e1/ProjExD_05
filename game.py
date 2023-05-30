@@ -306,13 +306,13 @@ def main():
                 score.score_up(20) 
             else:
                 score.score_up(10)
-            pg.display.update()
+            #pg.display.update()
 
         # 工科丸とボーナスコインの衝突判定
         if len(pg.sprite.spritecollide(bird, bonusC, True)) != 0:
             diff_level.count -= 5
             score.score_up(100)
-            pg.display.update()
+            #pg.display.update()
 
         # 工科丸と敵機の衝突判定
         if len(pg.sprite.spritecollide(bird, emys1, True)) != 0:
