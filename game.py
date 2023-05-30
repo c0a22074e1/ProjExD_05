@@ -90,22 +90,56 @@ class Bird(pg.sprite.Sprite):
         
         screen.blit(self.image, self.rect)
 
+class Score:
+    """
+    コインの得た数をスコアとして表示する
+    銀:10点
+    金:20点
+    """
+    def __init__(self):
+        self.font = pg.font.Font(None, 40)
+        self.color = (255, 128, 0)
+        self.score = 0
+        self.image = self.font.render(f"Score: {self.score}", 0, self.color)
+        self.rect = self.image.get_rect()
+        self.rect.center = WIDTH - 100, 30
+        self.flag = 0
+
+    def score_up(self, add):
+        self.score += add
+
+    def update(self, screen: pg.Surface):
+        self.image = self.font.render(f"score: {self.score}", 0, self.color)
+        screen.blit(self.image, self.rect)
+
 
 class Coin(pg.sprite.Sprite):
     """
     コインに関するクラス
     """
-    img = pg.image.load("ex05/fig/coin.png")
-    
+    image = [1, 2, 2, 2]
+    a = 0
+
     def __init__(self):
         super().__init__()
-        self.image = Coin.img
+        self.count = random.choice(__class__.image)
+        if self.count == 1:
+            self.image = pg.image.load("ex05/fig/coin.png")
+            self.image = pg.transform.rotozoom(self.image,0,0.5)
+            __class__.a = 1
+        else:
+            self.image = pg.image.load("ex05/fig/coin_silver.png")
+            self.image = pg.transform.rotozoom(self.image,0,0.1)
+            __class__.a = 2
+            #print(self.image)
         self.image.set_colorkey((255, 255, 255))  # 白の背景を透過
-        self.image = pg.transform.rotozoom(self.image,0,0.5)
+        
         self.rect = self.image.get_rect()
         self.rect.center = WIDTH-100,random.randint(0, HEIGHT)
-        self.vx = -2
-
+        if __class__.a == 2:
+            self.rect.center = WIDTH-200,random.randint(0, HEIGHT)
+        #print(a, self.rect.center)
+        self.vx, self.vy = -6, 0 
         
     def update(self):
         """
@@ -209,7 +243,7 @@ def main():
     clock  = pg.time.Clock()
     bg_img = pg.image.load("ex05/fig/pg_bg.jpg")
     bg_imgs = pg.transform.flip(bg_img, True,False)
-
+    score = Score()
     diff_level = Difficulty_level("normal")
     bird = Bird([100, 200])
     coins = pg.sprite.Group()
@@ -269,11 +303,16 @@ def main():
         # 工科丸とコインの衝突判定
         if len(pg.sprite.spritecollide(bird, coins, True)) != 0:
             diff_level.count -= 2
+            if Coin.a == 1:
+                score.score_up(20) 
+            else:
+                score.score_up(10)
             pg.display.update()
 
         # 工科丸とボーナスコインの衝突判定
         if len(pg.sprite.spritecollide(bird, bonusC, True)) != 0:
             diff_level.count -= 5
+            score.score_up(100)
             pg.display.update()
 
         # 工科丸と敵機の衝突判定
@@ -290,6 +329,7 @@ def main():
         for coin in coins:
             if False in check_bound(screen.get_rect(), coin.rect):
                 coin.kill()
+                #print(0)
         # 敵機が外に出たら削除
         for emy in emys1:
             if False in check_bound(screen.get_rect(), emy.rect):
@@ -301,8 +341,7 @@ def main():
         
         key_lst = pg.key.get_pressed()
         bird.update(key_lst, screen)
-        coins.update()
-        coins.draw(screen)
+        
         bonusC.update()
         bonusC.draw(screen)
         emys1.update(diff_level)
@@ -310,8 +349,12 @@ def main():
         emys2.update(diff_level)
         emys2.draw(screen)
         diff_level.update(screen)
+        coins.update()
+        coins.draw(screen)
+        score.update(screen)
         pg.display.update()
-        clock.tick(200)
+        clock.tick(100)
+        
 
 
 if __name__ == "__main__":
