@@ -189,7 +189,7 @@ def main():
         emys.update()
         emys.draw(screen)
         pg.display.update()
-        clock.tick(200)
+        clock.tick(100)
 
 
 if __name__ == "__main__":
