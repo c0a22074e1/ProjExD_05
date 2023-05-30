@@ -12,7 +12,7 @@ def main():
     pg.display.set_caption("真！こうかとん無双")
     screen = pg.display.set_mode((WIDTH, HEIGHT))
 
-class Life():
+class Life(pg.sprite.Sprite):
     def __init__(self,life):
         self.life=life
         img0 = pg.transform.rotozoom(pg.image.load(f"ex04/fig/life.png"), 0, 2.0)
@@ -22,7 +22,6 @@ class Life():
         image = pg.transform.rotozoom(pg.image.load(f"ex04/fig/life.png"), 0, 2.0)
         screen.blit(image, (1200,800))
 
-    def dec_life():
 
 
 class Bird(pg.sprite.Sprite):
