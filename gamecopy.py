@@ -292,28 +292,16 @@ def main():
                 coins2.add(coins_2)
 
         # フラグに応じて敵機の生成を制御
-        if not flag and tmr % 500 == 0:
+        if not flag and tmr % diff_level.count == 0:
             emys1.add(Enemy1())
             emys1.add(Enemy1())
-        if not flag and tmr % 400 == 0:    
+        if not flag and tmr % (diff_level.count/2) == 0:    
             emys2.add(Enemy2())
             emys2.add(Enemy2())
-        if diff_level.level == "Hard":
-            if not flag and tmr % 300 == 0:
-                emys1.add(Enemy1())
-                emys1.add(Enemy2())
-        if diff_level.level == "Lunatic":
-            if not flag and tmr % 300 == 0:
-                emys1.add(Enemy1())
-                emys1.add(Enemy2())
-        if diff_level.level == "Lunatic":
-            if not flag and tmr % 200 == 0:
-                emys1.add(Enemy1())
-                emys1.add(Enemy2())
 
+        # if tmr % 300 == 0:
+            # flag = False
         if tmr % 3000 == 0:
-            flag = False
-        elif tmr % 7000 == 0:
             flag = True
             coins1.empty()  # コインの削除
             coins2.empty()
@@ -321,7 +309,7 @@ def main():
             emys2.empty()  # 変則型敵機の削除
 
         
-        if flag and tmr % 7000 == 0:
+        if flag and tmr % 3000 == 0:
             bonusC.add(Bonus((0, 255, 0), 200))
         
         tmr += 1
