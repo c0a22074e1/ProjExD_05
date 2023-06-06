@@ -119,17 +119,17 @@ class Coin(pg.sprite.Sprite):
     """
     image = [1, 2, 2, 2]
     a = 0
-    def __init__(self, score: Score):
+    def __init__(self):
         super().__init__()
         self.count = random.choice(__class__.image)
         if self.count == 1:
             self.image = pg.image.load("ex05/fig/coin.png")
             self.image = pg.transform.rotozoom(self.image,0,0.5)
-            score.flag = 1
+            self.change = 0
         else:
             self.image = pg.image.load("ex05/fig/coin_silver.png")
             self.image = pg.transform.rotozoom(self.image,0,0.1)
-            score.flag = 2
+            self.change = 1
             #print(self.image)
         self.image.set_colorkey((255, 255, 255))  # 白の背景を透過
         
@@ -147,8 +147,6 @@ class Coin(pg.sprite.Sprite):
         引数 screen：画面Surface
         """
         self.rect.centerx += self.vx
-
-
 
 
 class Bonus(pg.sprite.Sprite):
@@ -195,6 +193,8 @@ class Enemy1(pg.sprite.Sprite):
         if diff_level.flag == 3:
             self.speed  = random.randint(11, 15)
         self.rect.centerx -= self.vx
+        if self.vx < 0:
+            self.kill()
 
 
 class Life(pg.sprite.Sprite): #残機に関するクラス
@@ -221,12 +221,11 @@ class Enemy2(pg.sprite.Sprite):
         super().__init__()
         self.image = random.choice(__class__.imgs)
         self.image = pg.transform.rotozoom(self.image,0,2.0)  #敵機のサイズ二倍
-
         self.rect = self.image.get_rect()
         self.rect.center = random.randint(1200, WIDTH), 100
         self.vy = +6
         self.vx = random.randint(2, 5)
-        self.bound = random.randint(50, HEIGHT)  # 停止位置
+        self.bound = random.randint(50, HEIGHT-100)  # 停止位置
 
     def update(self, diff_level: Difficulty_level):
         """
@@ -242,12 +241,9 @@ class Enemy2(pg.sprite.Sprite):
         self.rect.centery += self.vy
         if self.rect.centery > self.bound:
             self.vy = 0
-            while True:
-                tmr += 1
-                if tmr % 10000 == 0:
-                    self.rect.centerx -= self.vx
-                    tmr = 0
-                    break
+            self.rect.centerx -= self.vx
+            if self.vx < 0:
+                self.kill()
 
 
 def main():
@@ -260,7 +256,8 @@ def main():
     score = Score()
     diff_level = Difficulty_level("normal")
     bird = Bird([100, 200])
-    coins = pg.sprite.Group()
+    coins1 = pg.sprite.Group()
+    coins2 = pg.sprite.Group()
     bonusC = pg.sprite.Group()
     emys1 = pg.sprite.Group()  # 敵機のグループ
     emys2 = pg.sprite.Group()  # 変則型敵機
@@ -282,9 +279,17 @@ def main():
 
         # フラグに応じてコインの生成を制御
         if not flag and tmr % 300 == 0:
-            coins.add(Coin(score))
+            coins_1 = (Coin())
+            if coins_1.change == 1:    
+                coins1.add(coins_1)
+            else:
+                coins2.add(coins_1)
         if not flag and tmr % 500 == 0:
-            coins.add(Coin(score))
+            coins_2 = (Coin())
+            if coins_2.change == 1:
+                coins1.add(coins_2)
+            else:
+                coins2.add(coins_2)
 
         # フラグに応じて敵機の生成を制御
         if not flag and tmr % diff_level.count == 0:
@@ -298,7 +303,8 @@ def main():
             flag = False
         elif tmr % 7000 == 0:
             flag = True
-            coins.empty()  # コインの削除
+            coins1.empty()  # コインの削除
+            coins2.empty()
             emys1.empty()  # 敵機の削除
             emys2.empty()  # 変則型敵機の削除
 
@@ -322,23 +328,29 @@ def main():
         if game_life.life==0:
             screen.blit(life_img,[1520,750])
 
-        if flag and len(pg.sprite.spritecollide(bird, bonusC, True)) != 0:
-            flag = False
-
-        # 工科丸とコインの衝突判定
-        if len(pg.sprite.spritecollide(bird, coins, True)) != 0:
+         # 工科丸とコインの衝突判定
+        for coins in (pg.sprite.spritecollide(bird, coins1, True)):
             diff_level.count -= 2
-            if score.flag == 1:
-                score.score_up(20) 
-            else:
-                score.score_up(10)
-            pg.display.update()
+            score.score_up(10)
+            coins.kill()
+        for coins in (pg.sprite.spritecollide(bird, coins2, True)):
+            diff_level.count -= 2
+            score.score_up(20)
+            coins.kill()
+            #pg.display.update()
+
+        # 工科丸とボーナスコインの衝突判定
+        for  bouns in (pg.sprite.spritecollide(bird, bonusC, True)):
+            diff_level.count -= 5
+            score.score_up(100)
+            flag = False
+            #pg.display.update()
 
         # 工科丸とボーナスコインの衝突判定
         if len(pg.sprite.spritecollide(bird, bonusC, True)) != 0:
             diff_level.count -= 5
             score.score_up(100)
-            pg.display.update()
+            #pg.display.update()
 
         # 工科丸と敵機の衝突判定
         if len(pg.sprite.spritecollide(bird, emys1, True)) != 0:
@@ -363,20 +375,14 @@ def main():
             else:
                 pg.display.update()
                 return
-
-        # コインが外に出たら削除
-        for coin in coins:
+            
+        for coin in coins1:
             if False in check_bound(screen.get_rect(), coin.rect):
                 coin.kill()
-                #print(0)
-        # 敵機が外に出たら削除
-        for emy in emys1:
-            if False in check_bound(screen.get_rect(), emy.rect):
-                emy.kill()
-        # 敵機が外に出たら削除
-        for emy in emys2:
-            if False in check_bound(screen.get_rect(), emy.rect):
-                emy.kill()
+
+        for coin in coins2:
+            if False in check_bound(screen.get_rect(), coin.rect):
+                coin.kill()
         
         key_lst = pg.key.get_pressed()
         bird.update(key_lst, screen)
@@ -388,8 +394,10 @@ def main():
         emys2.update(diff_level)
         emys2.draw(screen)
         diff_level.update(screen)
-        coins.update()
-        coins.draw(screen)
+        coins1.update()
+        coins1.draw(screen)
+        coins2.update()
+        coins2.draw(screen)
         score.update(screen)
         pg.display.update()
         clock.tick(100)
